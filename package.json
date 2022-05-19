@@ -1,0 +1,38 @@
+{
+  "name": "rafflable-raffle-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "ENV=production next build",
+    "build:testnet": "ENV=testnet next build",
+    "export": "next export",
+    "lint": "eslint --fix-dry-run .",
+    "serve": "serve out",
+    "prettier:fix": "prettier --write \"**/*.{js,ts,tsx,json,css,html,yaml,scss,sass}\"",
+    "lint:fix": "eslint --fix . && npm run prettier:fix"
+  },
+  "dependencies": {
+    "bootstrap": "^4.6.1",
+    "kardia-js-sdk": "^0.6.0",
+    "line-height": "^0.3.1",
+    "next": "^12.1.0",
+    "prop-types": "^15.8.1",
+    "react": "^17.0.2",
+    "react-bootstrap": "^2.4.0",
+    "react-bootstrap-range-slider": "^3.0.4",
+    "react-dom": "^17.0.2",
+    "react-icons": "^4.3.1",
+    "react-motion": "^0.5.2",
+    "react-paginate": "8.1",
+    "react-spinners": "^0.11.0",
+    "reactstrap": "^9.0.2",
+    "recharts": "^2.1.9",
+    "sass": "^1.51.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged"
+    }
+  }
+}

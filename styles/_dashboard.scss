@@ -1,0 +1,39 @@
+@import 'variables';
+
+.view {
+  .view-content {
+    margin-top: 0px;
+    .dashboard-left {
+      margin-top: -4.2rem;
+    }
+  }
+
+  .view-dashboard {
+    .dashboard-left > .row,
+    .dashboard-right > .row {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .card,
+    .card-group {
+      width: 100%;
+    }
+
+    .ticket-card {
+      div + .card .card-body {
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        align-items: center;
+        border-bottom: 1px solid $md-blue-grey-50;
+        svg {
+          transform: translate(0, -2px);
+        }
+      }
+      div + .card .card-body:last-child {
+        border: 0;
+      }
+    }
+  }
+}
