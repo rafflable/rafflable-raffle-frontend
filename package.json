@@ -26,7 +26,7 @@
     "react-motion": "^0.5.2",
     "react-paginate": "8.1",
     "react-spinners": "^0.11.0",
-    "reactstrap": "^9.0.2",
+    "reactstrap": "^8.9.0",
     "recharts": "^2.1.9",
     "sass": "^1.51.0"
   },
