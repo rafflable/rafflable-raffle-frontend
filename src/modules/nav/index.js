@@ -109,7 +109,7 @@ export default function Nav(props) {
               <ul className="inner-drop list-unstyled">
                 <li>
                   <a href={rafflableContractUrl} target="_blank">
-                    KRC721Rafflable
+                    Rafflable
                   </a>
                 </li>
                 <li>
@@ -132,7 +132,13 @@ export default function Nav(props) {
             <Collapse isOpen={collapseBasePath === `${basePath}/marketplaces`}>
               <ul className="inner-drop list-unstyled">
                 <li>
-                  <a>Coming soon</a>
+                  <a>Kephi Gallery</a>
+                </li>
+                <li>
+                  <a>Becoswap</a>
+                </li>
+                <li>
+                  <a>Agoran</a>
                 </li>
               </ul>
             </Collapse>

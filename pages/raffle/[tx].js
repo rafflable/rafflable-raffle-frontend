@@ -29,7 +29,7 @@ import useKardiachain from '@/hooks/useKardiachain';
 import constants from '@/constants';
 
 // icons
-import FaTicketAlt from 'react-icons/fa';
+import { TiTicket } from 'react-icons/ti';
 
 const DashHead = () => (
     <div className="view-header d-flex align-items-center">
@@ -406,11 +406,11 @@ const DashContent = () => {
                         <div key={`hat-ticket-${ticketNumber}`} className="p-2">
                           <div className="text-center" style={{ width: '128px', height: '128px' }}>
                             <Col className="pt-4">
-                              <FaTicketAlt size="80"
+                              <TiTicket size="80"
                                 color={ownerTickets.includes(ticketNumber) ? "#eab308" : "#cacaca" }
                                 className="mb-2"
                               />
-                              <h2 style={{ marginTop: '-60px' }}>#{ticketNumber}</h2>
+                              <h2 style={{ marginTop: '-60px', marginLeft: '-10px' }}>#{ticketNumber}</h2>
                             </Col>
                           </div>
                         </div>
