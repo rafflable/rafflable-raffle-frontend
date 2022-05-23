@@ -53,7 +53,7 @@ const DropdownWallet = () => {
       }
     }, constants.dashboardRefreshInterval);
     return () => clearInterval(interval);
-  }, [account]);
+  }, [account, raffleConfig.loaded]);
 
   return (
     <UncontrolledDropdown>
