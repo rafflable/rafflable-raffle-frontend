@@ -37,15 +37,86 @@ const DashHead = () => (
 );
 
 const ClaimContent = () => {
+  const [loading, setLoading] = React.useState(false);
+  const [ownerBalanceOf, setOwnerBalanceOf] = React.useState(0);
+  const [ownerTickets, setOwnerTickets] = React.useState([]);
+  const [prize, setPrize] = React.useState(0);
+  const [claimables, setClaimables] = React.useState([]);
+  const [error, setError] = React.useState(false);
+
+  const { setClaimDialogOpen } = useDialog();
+  const { account } = useKardiachain();
+  const { readRafflable } = useRafflable();
+  const { readRaffler, claim } = useRaffler();
+  const { raffleConfig } = useRaffleConfig();
+  const BigNumber = require('bignumber.js');
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+        if (account) {
+          readRafflable(raffleConfig.rafflableAddress, 'balanceOf', [account]).then((val) => {
+            setOwnerBalanceOf(val);
+            const tickets = [];
+            while (--val >= 0) {
+              tickets.push(readRafflable(raffleConfig.rafflableAddress, 'tokenOfOwnerByIndex', [account, val]))
+            }
+            Promise.all(tickets).then((values) => {
+              setOwnerTickets(values);
+            })
+          })
+        } else {
+          setOwnerBalanceOf(0);
+          setOwnerTickets([]);
+        }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [account]);
+
+  React.useEffect(() => {
+    readRaffler(raffleConfig.rafflerAddress, 'claimable').then((val) => {
+      setClaimables(val.filter(ticket => ownerTickets.includes(ticket)));
+      if (claimables.length > 0) {
+        readRaffler(raffleConfig.rafflerAddress, 'withdrawableBalance', [claimables[0], raffleConfig.config.tokenAddress]).then((val) => {
+          setPrize(val);
+        });
+      }
+    });
+  }, [ownerTickets]);
+
+  const withDecimals = (val) => {
+    if (val) {
+      return new BigNumber(val).shiftedBy(-Math.abs(raffleConfig.config.tokenDecimals)).toString();
+    }
+  }
 
   return (
     <Card className="mb-5">
-      <CardBody>
-        <CardTitle>We are working on that.</CardTitle>
-      </CardBody>
-      <CardFooter>
-        Please check back soon.
-      </CardFooter>
+      {prize > 0 ?
+      <>
+        <CardBody>
+          <CardTitle className="">You have won a prize!</CardTitle>
+        </CardBody>
+        <CardFooter>
+          <div className="w-100 text-center">
+            <h1>{withDecimals(prize)} {raffleConfig.config.tokenSymbol}</h1>
+          </div>
+        </CardFooter>
+      </>
+      : <CardBody>
+          <CardTitle>You have no prize yet.</CardTitle>
+        </CardBody>
+      }
+      <Button color="primary" className="mx-2 mt-4" style={{ height: '4em' }} disabled={claimables.length > 0 ? false : true}
+        onClick={() => { setError(false); setLoading(true); claim(raffleConfig.rafflerAddress, account, claimables[0]).then((tx) => { setLoading(false); setClaimDialogOpen(false); }).catch((err) => { setLoading(false); setError(true); }) } }
+        >
+          <PropagateLoader loading={loading} color="#fff" size={10} />
+          {loading ? '' : 'Claim'}
+      </Button>
+      {error ?
+        <div className="text-right m-3" style={{ color: '#dc2626' }}>
+          An error occured.
+        </div>
+      : ''}
     </Card>
   );
 }
@@ -116,7 +187,7 @@ const BuyContent = () => {
       </CardFooter>
       {approved ?
         <Button color="primary" className="mx-2 mt-4" style={{ height: '4em' }} disabled={!hasFund}
-          onClick={() => { setError(false); setLoading(true); mint(raffleConfig.rafflableAddress, account, amount).then((tx) => { setLoading(false); setBuyDialogOpen(false); }).catch((err) => { setLoading(false); setError(true); }) } }
+          onClick={() => { setError(false); setLoading(true); mint(raffleConfig.rafflableAddress, account, amount).then((tx) => { setLoading(false); setBuyDialogOpen(false); }).catch((err) => { console.log(err); setLoading(false); setError(true); }) } }
         >
           <PropagateLoader loading={loading} color="#fff" size={10} />
           {loading ? '' : 'Buy'}
@@ -197,7 +268,7 @@ const DashContent = () => {
       config.ticketCap = raffleConfig.initialValues.ticketCap;
       setConfig(raffleConfig.config);
     }
-  }, [raffleConfig]);
+  }, [raffleConfig.loaded]);
 
   React.useEffect(() => {
     const interval = setInterval(() => {
@@ -232,7 +303,7 @@ const DashContent = () => {
       }
     }, constants.dashboardRefreshInterval);
     return () => clearInterval(interval);
-  }, [account]);
+  }, [account, config]);
 
   const withDecimals = (val) => {
     if (val) {
@@ -307,7 +378,7 @@ const DashContent = () => {
                     return (
                         <div key={`owner-ticket-${ticketNumber}`}
                           style={{ display: 'inline-block' }}
-                          className="p-2 col-12 col-sm-6 col-xl-4">
+                          className="p-2 col-12 col-sm-6 col-xl-4 text-wrap">
                           <Card className="text-center align-items-center">
                             <img style={{ objectFit: 'scale-down' }} src={config.banner} />
                             <h5 className="p-2">{config.title} #{ticketNumber}</h5>

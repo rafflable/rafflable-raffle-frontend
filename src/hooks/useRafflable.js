@@ -14,10 +14,10 @@ const readRafflable = (address, method, params = []) => {
   return callHelpers(client.contract, address, method, params);
 };
 
-const mint = async (rafflableAddress, account, amount) => {
+const mint = async (address, account, amount) => {
   const txData = client.contract.invokeContract('mint', [amount]).txData()
 
-  const response = await sendTransaction(client, account, txData, rafflableAddress)
+  const response = await sendTransaction(client, account, txData, address)
 
   return response.transactionHash
 }
