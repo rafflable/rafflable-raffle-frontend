@@ -1,6 +1,6 @@
 import KardiaClient from 'kardia-js-sdk';
 import { callHelpers, sendTransaction } from '@/utils/callHelpers';
-import krc20Abi from '@/abi/krc20.json';
+import krc20Abi from '@/abi/KRC20.json';
 import constants from '@/constants';
 
 const client = new KardiaClient({ endpoint: constants.web3RpcEndpoint });

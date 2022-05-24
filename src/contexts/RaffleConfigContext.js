@@ -4,6 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import KardiaClient from 'kardia-js-sdk';
 import useRaffleFactory from '@/hooks/useRaffleFactory';
+import useRafflerFactory from '@/hooks/useRafflerFactory';
+import useRafflableFactory from '@/hooks/useRafflableFactory';
 import useRaffler from '@/hooks/useRaffler';
 import useRafflable from '@/hooks/useRafflable';
 import useKRC20 from '@/hooks/useKRC20';
@@ -18,6 +20,8 @@ const RaffleConfigContextProvider = ({ children }) => {
   const router = useRouter();
 
   const { logsRaffleFactory } = useRaffleFactory();
+  const { logsRafflerFactory } = useRafflerFactory();
+  const { logsRafflableFactory } = useRafflableFactory();
   const { readRafflable } = useRafflable();
   const { readRaffler } = useRaffler();
   const { readKRC20 } = useKRC20();
@@ -53,18 +57,35 @@ const RaffleConfigContextProvider = ({ children }) => {
       return;
     }
     try {
-      const logs = await logsRaffleFactory(txInput);
-      const publishedEvent = logs.find((o) => { return o.event && o.event.name === "RafflePublished" })
+      const logs = await logsRafflerFactory(txInput);
+      const publishedEvent = logs.find((o) => { return o.event && o.event.name === "RafflerCreated" })
       if (!publishedEvent) {
         setRaffleConfig(undefined);
         return;
       }
       const raffler = publishedEvent.event.raffler;
+
+      logs = await logsRafflableFactory(txInput);
+      publishedEvent = logs.find((o) => { return o.event && o.event.name === "RafflableCreated" })
+      if (!publishedEvent) {
+        setRaffleConfig(undefined);
+        return;
+      }
       const rafflable = publishedEvent.event.rafflable;
+
+      logs = await logsRaffleFactory(txInput);
+      publishedEvent = logs.find((o) => { return o.event && o.event.name === "RafflePublished" })
+      if (!publishedEvent) {
+        setRaffleConfig(undefined);
+        return;
+      }
+      const creator = publishedEvent.event.creator;
+
       const uri = await readRafflable(rafflable, 'configUri');
       const config = await fetch(uri).then((res) => res.json());
       l('put on boots')
-      config.creator = Web3.utils.toChecksumAddress(publishedEvent.event.creator);
+      config.title = publishedEvent.event.title;
+      config.creator = Web3.utils.toChecksumAddress(creator);
       config.tokenAddress = await readRafflable(rafflable, 'token');
       config.tokenSymbol = await readKRC20(config.tokenAddress, 'symbol');
       config.tokenDecimals = await readKRC20(config.tokenAddress, 'decimals');
@@ -80,6 +101,7 @@ const RaffleConfigContextProvider = ({ children }) => {
         initialValues: values,
       });
     } catch (error) {
+console.log(error)
       setRaffleConfig(undefined);
     }
   }, [router]);
