@@ -435,7 +435,8 @@ const DashContent = () => {
                 <CardBody>
                   <CardTitle className="text-uppercase h6">{config.title}</CardTitle>
                   <div className="small mb-4 card-subtitle">
-                    Created on {config.createdAt}
+                    Created on {config.createdAt}<br/>
+                    From {config.creator}
                   </div>
 
                   <div>
