@@ -7,14 +7,14 @@ const constants = {
     rafflableUrl: 'http://localhost:3000',
     explorerUrl: 'https://explorer-dev.kardiachain.io/address',
     web3RpcEndpoint: 'https://dev-1.kardiachain.io',
-    factories: ['0x285b96514741827D9D72643f290fd36159B24810'],
+    factories: ['0x4Cf8aB283AE6038413492FcCc7F86C182c7bAAa6'],
     dashboardRefreshInterval: 5000,
   },
   testnet: {
     rafflableUrl: 'https://testnet.rafflable.io',
     explorerUrl: 'https://explorer-dev.kardiachain.io/address',
     web3RpcEndpoint: 'https://dev-1.kardiachain.io',
-    factories: ['0x285b96514741827D9D72643f290fd36159B24810'],
+    factories: ['0x4Cf8aB283AE6038413492FcCc7F86C182c7bAAa6'],
     dashboardRefreshInterval: 5000,
   },
   production: {

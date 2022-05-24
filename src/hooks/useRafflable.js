@@ -22,8 +22,16 @@ const mint = async (address, account, amount) => {
   return response.transactionHash
 }
 
+const withdraw = async (address, account) => {
+  const txData = client.contract.invokeContract('withdraw', []).txData()
+
+  const response = await sendTransaction(client, account, txData, address)
+
+  return response.transactionHash
+}
+
 const useRafflable = () => {
-  return { logsRafflable, readRafflable, mint };
+  return { logsRafflable, readRafflable, mint, withdraw };
 };
 
 export default useRafflable;

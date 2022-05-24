@@ -15,6 +15,7 @@ import {
 } from 'reactstrap';
 import { PolarRadiusAxis, RadialBarChart, RadialBar } from 'recharts';
 import RiseLoader from 'react-spinners/RiseLoader';
+import PulseLoader from 'react-spinners/PulseLoader';
 import PropagateLoader from 'react-spinners/PropagateLoader';
 import RangeSlider from 'react-bootstrap-range-slider';
 import ReactPaginate from 'react-paginate';
@@ -25,6 +26,7 @@ import useRaffleConfig from '@/hooks/useRaffleConfig';
 import useKRC20 from '@/hooks/useKRC20';
 import useRafflable from '@/hooks/useRafflable';
 import useRaffler from '@/hooks/useRaffler';
+import useTRAFF from '@/hooks/useTRAFF';
 import useKardiachain from '@/hooks/useKardiachain';
 import constants from '@/constants';
 
@@ -35,13 +37,119 @@ const DashHead = () => (
     <div className="view-header d-flex align-items-center">
     </div>
 );
+const FaucetContent = () => {
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState(false);
+
+  const { setFaucetDialogOpen } = useDialog();
+  const { account } = useKardiachain();
+  const { faucet } = useTRAFF();
+  const { raffleConfig } = useRaffleConfig();
+  const BigNumber = require('bignumber.js');
+
+  return (
+    <Card className="mb-5">
+      <CardBody>
+        <CardTitle className="">Click on the button below to credit 1000 {raffleConfig.config.tokenSymbol} tokens to your wallet.</CardTitle>
+        <p>
+You will need testnet KAI in your wallet for the transaction fee so make sure you get some from <a target="_blank" href="https://explorer-dev.kardiachain.io/faucet" className="card-link">Kardiachain's Fengari faucet</a>.
+        </p>
+      </CardBody>
+
+      <Button color="primary" className="mx-2 mt-4" style={{ height: '4em' }} disabled={!account}
+        onClick={() => { setError(false); setLoading(true); faucet(raffleConfig.config.tokenAddress, account).then((tx) => { setLoading(false); setFaucetDialogOpen(false); }).catch((err) => { setLoading(false); setError(true); }) } }
+        >
+          <PropagateLoader loading={loading} color="#fff" size={10} />
+          {loading ? '' : 'Credit'}
+      </Button>
+      {error ?
+        <div className="text-right m-3" style={{ color: '#dc2626' }}>
+          An error occured.
+        </div>
+      : ''}
+    </Card>
+  );
+}
+
+const WithdrawContent = () => {
+  const [loading, setLoading] = React.useState(false);
+  const [balance, setBalance] = React.useState(undefined);
+  const [isCreator, setIsCreator] = React.useState(false);
+  const [error, setError] = React.useState(false);
+
+  const { setWithdrawDialogOpen } = useDialog();
+  const { account } = useKardiachain();
+  const { readKRC20 } = useKRC20();
+  const { withdraw } = useRafflable();
+  const { raffleConfig } = useRaffleConfig();
+  const BigNumber = require('bignumber.js');
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      if (raffleConfig && raffleConfig.loaded) {
+        readKRC20(raffleConfig.config.tokenAddress, 'balanceOf', [raffleConfig.rafflableAddress]).then((balance) => {
+          setBalance(balance);
+        });
+      }
+    }, constants.dashboardRefreshInterval);
+    return () => clearInterval(interval);
+  }, [raffleConfig.loaded]);
+
+  React.useEffect(() => {
+    if (account && raffleConfig && raffleConfig.loaded) {
+      setIsCreator(account === raffleConfig.config.creator);
+    } else {
+      setIsCreator(false);
+    }
+  }, [account, raffleConfig.loaded]);
+
+  const withDecimals = (val) => {
+    if (val) {
+      return new BigNumber(val).shiftedBy(-Math.abs(raffleConfig.config.tokenDecimals)).toString();
+    }
+    return 0;
+  }
+
+  return (
+    <Card className="mb-5">
+      <CardBody>
+        <CardTitle className="">Withdrawable sales balance:</CardTitle>
+      </CardBody>
+      <CardFooter>
+        <div className="w-100 text-center">
+        {balance !== undefined ?
+          <h1>{withDecimals(balance)} {raffleConfig.config.tokenSymbol}</h1>
+        :
+          <PulseLoader loading={true} />
+        }
+        </div>
+      </CardFooter>
+      <Button color="primary" className="mx-2 mt-4" style={{ height: '4em' }} disabled={!isCreator || balance <= 0 || balance === undefined}
+        onClick={() => { setError(false); setLoading(true); withdraw(raffleConfig.rafflableAddress, account).then((tx) => { setLoading(false); setWithdrawDialogOpen(false); }).catch((err) => { setLoading(false); setError(true); }) } }
+        >
+          <PropagateLoader loading={loading} color="#fff" size={10} />
+          {loading ? '' : 'Withdraw'}
+      </Button>
+      {!isCreator ?
+        <div className="text-right m-3" style={{ color: '#dc2626' }}>
+          You must be the creator to withdraw the sales balance.
+        </div>
+      : ''}
+      {error ?
+        <div className="text-right m-3" style={{ color: '#dc2626' }}>
+          An error occured.
+        </div>
+      : ''}
+    </Card>
+  );
+}
 
 const ClaimContent = () => {
   const [loading, setLoading] = React.useState(false);
   const [ownerBalanceOf, setOwnerBalanceOf] = React.useState(0);
-  const [ownerTickets, setOwnerTickets] = React.useState([]);
-  const [prize, setPrize] = React.useState(0);
-  const [claimables, setClaimables] = React.useState([]);
+  const [ownerTickets, setOwnerTickets] = React.useState(undefined);
+  const [prize, setPrize] = React.useState(undefined);
+  const [claimable, setClaimable] = React.useState(undefined);
   const [error, setError] = React.useState(false);
 
   const { setClaimDialogOpen } = useDialog();
@@ -67,18 +175,23 @@ const ClaimContent = () => {
         } else {
           setOwnerBalanceOf(0);
           setOwnerTickets([]);
+          setPrize(0);
         }
     }, 1000);
     return () => clearInterval(interval);
   }, [account]);
 
   React.useEffect(() => {
+    if (ownerTickets === undefined) return;
     readRaffler(raffleConfig.rafflerAddress, 'claimable').then((val) => {
-      setClaimables(val.filter(ticket => ownerTickets.includes(ticket)));
+      const claimables = val.filter(ticket => ownerTickets.includes(ticket));
       if (claimables.length > 0) {
         readRaffler(raffleConfig.rafflerAddress, 'withdrawableBalance', [claimables[0], raffleConfig.config.tokenAddress]).then((val) => {
           setPrize(val);
+          setClaimable(claimables[0]);
         });
+      } else {
+        setPrize(0);
       }
     });
   }, [ownerTickets]);
@@ -87,27 +200,25 @@ const ClaimContent = () => {
     if (val) {
       return new BigNumber(val).shiftedBy(-Math.abs(raffleConfig.config.tokenDecimals)).toString();
     }
+    return 0;
   }
 
   return (
     <Card className="mb-5">
-      {prize > 0 ?
-      <>
-        <CardBody>
-          <CardTitle className="">You have won a prize!</CardTitle>
-        </CardBody>
-        <CardFooter>
-          <div className="w-100 text-center">
-            <h1>{withDecimals(prize)} {raffleConfig.config.tokenSymbol}</h1>
-          </div>
-        </CardFooter>
-      </>
-      : <CardBody>
-          <CardTitle>You have no prize yet.</CardTitle>
-        </CardBody>
-      }
-      <Button color="primary" className="mx-2 mt-4" style={{ height: '4em' }} disabled={claimables.length > 0 ? false : true}
-        onClick={() => { setError(false); setLoading(true); claim(raffleConfig.rafflerAddress, account, claimables[0]).then((tx) => { setLoading(false); setClaimDialogOpen(false); }).catch((err) => { setLoading(false); setError(true); }) } }
+      <CardBody>
+        <CardTitle className="">Claimable prize balance:</CardTitle>
+      </CardBody>
+      <CardFooter>
+        <div className="w-100 text-center">
+        {prize !== undefined ?
+          <h1>{withDecimals(prize)} {raffleConfig.config.tokenSymbol}</h1>
+        :
+          <PulseLoader loading={true} />
+        }
+        </div>
+      </CardFooter>
+      <Button color="primary" className="mx-2 mt-4" style={{ height: '4em' }} disabled={claimable === undefined}
+        onClick={() => { setError(false); setLoading(true); claim(raffleConfig.rafflerAddress, account, claimable).then((tx) => { setLoading(false); setClaimDialogOpen(false); }).catch((err) => { setLoading(false); setError(true); }) } }
         >
           <PropagateLoader loading={loading} color="#fff" size={10} />
           {loading ? '' : 'Claim'}
@@ -194,7 +305,7 @@ const BuyContent = () => {
         </Button>
       :
         <Button color="primary" className="mx-2 mt-4" style={{ height: '4em' }} disabled={!hasFund}
-          onClick={() => { setError(false); setLoading(true); approve(raffleConfig.config.tokenAddress, raffleConfig.rafflableAddress, account, new BigNumber(raffleConfig.initialValues.ticketCost).multipliedBy(amount).toString()).then((tx) => { setApproved(true); setLoading(false); }).catch((err) => { setLoading(false); setError(true); }) } }
+          onClick={() => { setError(false); setLoading(true); approve(raffleConfig.config.tokenAddress, raffleConfig.rafflableAddress, account, new BigNumber(raffleConfig.initialValues.ticketCost).multipliedBy(amount).toString()).then((tx) => { setApproved(true); setLoading(false); }).catch((err) => { setLoading(false); setError(true); console.log(err)}) } }
         >
           <PropagateLoader loading={loading} color="#fff" size={10} />
           {loading ? '' : 'Approve'}
@@ -268,7 +379,7 @@ const DashContent = () => {
       config.ticketCap = raffleConfig.initialValues.ticketCap;
       setConfig(raffleConfig.config);
     }
-  }, [raffleConfig.loaded]);
+  }, [raffleConfig]);
 
   React.useEffect(() => {
     const interval = setInterval(() => {
@@ -523,6 +634,8 @@ const DashContent = () => {
 export default function Dashboard() {
   const { isBuyDialogOpen, setBuyDialogOpen } = useDialog();
   const { isClaimDialogOpen, setClaimDialogOpen } = useDialog();
+  const { isWithdrawDialogOpen, setWithdrawDialogOpen } = useDialog();
+  const { isFaucetDialogOpen, setFaucetDialogOpen } = useDialog();
 
   return (
     <Layout>
@@ -531,6 +644,12 @@ export default function Dashboard() {
       </PageDialog>
       <PageDialog isOpen={isClaimDialogOpen} setOpen={setClaimDialogOpen}>
         <ClaimContent />
+      </PageDialog>
+      <PageDialog isOpen={isWithdrawDialogOpen} setOpen={setWithdrawDialogOpen}>
+        <WithdrawContent />
+      </PageDialog>
+      <PageDialog isOpen={isFaucetDialogOpen} setOpen={setFaucetDialogOpen}>
+        <FaucetContent />
       </PageDialog>
       <DashHead />
       <DashContent />

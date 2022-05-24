@@ -12,8 +12,9 @@ import useKardiachain from '@/hooks/useKardiachain';
 
 // icons
 import { GoGear } from 'react-icons/go';
-import { FaDollarSign, FaShoppingCart, FaTicketAlt, FaGift } from 'react-icons/fa';
-import { MdLayers, MdChevronRight } from 'react-icons/md';
+import { FaShoppingCart, FaTicketAlt, FaGift } from 'react-icons/fa';
+import { MdAttachMoney, MdLayers, MdChevronRight } from 'react-icons/md';
+import { RiRefund2Line } from 'react-icons/ri';
 import ScrollArea from '../scrollbar';
 
 const NavHead = (props) => {
@@ -34,7 +35,7 @@ export default function Nav(props) {
   const [rafflerContractUrl, setRafflerContractUrl] = React.useState('#');
   const [rafflableContractUrl, setRafflableContractUrl] = React.useState('#');
   const [collapseBasePath, setCollapseBasePath] = React.useState(''); // set Collapse path.
-  const { setBuyDialogOpen, setClaimDialogOpen } = useDialog();
+  const { setBuyDialogOpen, setClaimDialogOpen, setWithdrawDialogOpen, setFaucetDialogOpen } = useDialog();
   const { raffleConfig } = useRaffleConfig();
   const { account } = useKardiachain();
 
@@ -150,18 +151,20 @@ export default function Nav(props) {
             <div className="nav-list-title">Testnet-only</div>
           </li>
 
-          <li className="text-center p-2">
-            <Button color="primary" className="w-100"
-              onClick={() => {
-                const { faucet } = useTRAFF();
-                faucet(raffleConfig.config.tokenAddress, account).then((tx) => {
-                }).catch((err) => {});
-                
-              }}
-            disabled={!account}>
-              <FaDollarSign size="18" />&nbsp;
-              Get {raffleConfig && raffleConfig.config ? raffleConfig.config.tokenSymbol : ''}
-            </Button>
+          <li>
+            <a onClick={() => { setWithdrawDialogOpen(true) }}>
+              <RiRefund2Line size="18" color="#047857" />
+              <span className="name">Withdraw sales</span>
+            </a>
+          </li>
+
+          <li>
+            <a onClick={() => { setFaucetDialogOpen(true) }}>
+              <MdAttachMoney size="18" color="#047857" />
+              <span className="name">
+                {raffleConfig && raffleConfig.config ? raffleConfig.config.tokenSymbol : ''} Faucet
+              </span>
+            </a>
           </li>
           </>
           : ''}

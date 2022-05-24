@@ -6,13 +6,19 @@ const DialogContext = React.createContext();
 const DialogContextProvider = ({ children }) => {
   const [isBuyDialogOpen, setBuyDialogOpen] = React.useState(false);
   const [isClaimDialogOpen, setClaimDialogOpen] = React.useState(false);
+  const [isWithdrawDialogOpen, setWithdrawDialogOpen] = React.useState(false);
+  const [isFaucetDialogOpen, setFaucetDialogOpen] = React.useState(false);
 
   return (
     <DialogContext.Provider value={{
       isBuyDialogOpen,
       setBuyDialogOpen,
       isClaimDialogOpen,
-      setClaimDialogOpen
+      setClaimDialogOpen,
+      isWithdrawDialogOpen,
+      setWithdrawDialogOpen,
+      isFaucetDialogOpen,
+      setFaucetDialogOpen
     }}>
       {children}
     </DialogContext.Provider>

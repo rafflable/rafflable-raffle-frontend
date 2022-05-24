@@ -1,3 +1,4 @@
+import Web3 from 'web3';
 import { useRouter } from 'next/router';
 import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
@@ -60,10 +61,10 @@ const RaffleConfigContextProvider = ({ children }) => {
       }
       const raffler = publishedEvent.event.raffler;
       const rafflable = publishedEvent.event.rafflable;
-      const creator = publishedEvent.event.creator;
       const uri = await readRafflable(rafflable, 'configUri');
       const config = await fetch(uri).then((res) => res.json());
       l('put on boots')
+      config.creator = Web3.utils.toChecksumAddress(publishedEvent.event.creator);
       config.tokenAddress = await readRafflable(rafflable, 'token');
       config.tokenSymbol = await readKRC20(config.tokenAddress, 'symbol');
       config.tokenDecimals = await readKRC20(config.tokenAddress, 'decimals');
