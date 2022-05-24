@@ -36,6 +36,7 @@ const RaffleConfigContextProvider = ({ children }) => {
     values.prizeBalance = await readRaffler(raffler, 'prizeOf', [config.tokenAddress]);
     values.prizeTarget = await readRaffler(raffler, 'rafflePrize', [config.tokenAddress]);
     l('get you there')
+    values.title = await readRafflable(rafflable, 'name');
     values.ticketCost = await readRafflable(rafflable, 'cost');
     values.ticketCap = await readRafflable(rafflable, 'cap');
     values.ticketSupply = await readRafflable(rafflable, 'totalSupply');
@@ -101,7 +102,6 @@ const RaffleConfigContextProvider = ({ children }) => {
         initialValues: values,
       });
     } catch (error) {
-console.log(error)
       setRaffleConfig(undefined);
     }
   }, [router]);

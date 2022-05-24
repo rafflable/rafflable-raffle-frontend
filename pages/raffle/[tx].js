@@ -377,6 +377,7 @@ const DashContent = () => {
       config.createdAt = new Date(raffleConfig.createdAt).toString();
       config.ticketCost = raffleConfig.initialValues.ticketCost;
       config.ticketCap = raffleConfig.initialValues.ticketCap;
+      config.title = raffleConfig.initialValues.title;
       setConfig(raffleConfig.config);
     }
   }, [raffleConfig]);
