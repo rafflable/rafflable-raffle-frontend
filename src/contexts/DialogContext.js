@@ -8,9 +8,12 @@ const DialogContextProvider = ({ children }) => {
   const [isClaimDialogOpen, setClaimDialogOpen] = React.useState(false);
   const [isWithdrawDialogOpen, setWithdrawDialogOpen] = React.useState(false);
   const [isFaucetDialogOpen, setFaucetDialogOpen] = React.useState(false);
+  const [isHistoryDialogOpen, setHistoryDialogOpen] = React.useState(false);
 
   return (
     <DialogContext.Provider value={{
+      isHistoryDialogOpen,
+      setHistoryDialogOpen,
       isBuyDialogOpen,
       setBuyDialogOpen,
       isClaimDialogOpen,

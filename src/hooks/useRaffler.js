@@ -4,9 +4,14 @@ import raffler from '@/abi/Raffler.json';
 import constants from '@/constants';
 
 const client = new KardiaClient({ endpoint: constants.web3RpcEndpoint });
+client.contract.updateAbi(raffler.abi);
+
+const logsRaffler = async (address, fromBlock, topics = []) => {
+  const logs = await client.kaiChain.getLogs(fromBlock, 'latest', address, topics);
+  return logs ? logs.map((item) => client.contract.parseEventFromLog(item)) : [];
+};
 
 const readRaffler = (address, method, params = []) => {
-  client.contract.updateAbi(raffler.abi);
   return callHelpers(client.contract, address, method, params);
 };
 
@@ -20,7 +25,7 @@ const claim = async (address, account, ticket) => {
 
 
 const useRaffler = () => {
-  return { readRaffler, claim };
+  return { readRaffler, logsRaffler, claim };
 };
 
 export default useRaffler;

@@ -32,11 +32,125 @@ import constants from '@/constants';
 
 // icons
 import { TiTicket } from 'react-icons/ti';
+import { GiTrophy } from 'react-icons/gi';
 
 const DashHead = () => (
     <div className="view-header d-flex align-items-center">
     </div>
 );
+
+const HistoryContent = () => {
+  const [loading, setLoading] = React.useState(false);
+  const [prizesWon, setPrizesWon] = React.useState(undefined);
+  const [error, setError] = React.useState(false);
+
+  const [showWinners, setShowWinners] = React.useState([]);
+  const [pageCount, setPageCount] = React.useState(0);
+  const [showWinnersOffset, setShowWinnersOffset] = React.useState(null);
+
+
+  const { setHistoryDialogOpen } = useDialog();
+  const { raffleConfig } = useRaffleConfig();
+  const { logsRaffler } = useRaffler();
+  const BigNumber = require('bignumber.js');
+
+  const winnersPerPage = 10;
+
+  React.useEffect(() => {
+    if (prizesWon === undefined) return;
+    const endOffset = showWinnersOffset + winnersPerPage;
+    setShowWinners(prizesWon.slice(showWinnersOffset, endOffset));
+    setPageCount(Math.ceil(prizesWon.length / winnersPerPage));
+  }, [showWinnersOffset, prizesWon]);
+
+  const handlePageClick = (event) => {
+    const newOffset = (event.selected * winnersPerPage) % prizesWon.length;
+    setShowWinnersOffset(newOffset);
+  };
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      if (raffleConfig && raffleConfig.loaded) {
+        const logs = logsRaffler(raffleConfig.rafflerAddress, raffleConfig.block, ['0xb3c0323a3b9df1b8e6fac076cb538d20464354ed830d34e20d29ff82381cc415']).then((logs) => {
+          setPrizesWon(logs.map((log, index) => {
+            return {
+              draw: index,
+              ticket: log.event.tokenId,
+              tokenAddress: log.event.token,
+              prize: log.event.amount,
+            }
+          }).reverse())
+        })
+      }
+    }, constants.dashboardRefreshInterval);
+    return () => clearInterval(interval);
+  }, [raffleConfig.loaded]);
+
+  const withDecimals = (val) => {
+    if (val) {
+      return new BigNumber(val).shiftedBy(-Math.abs(raffleConfig.config.tokenDecimals)).toString();
+    }
+    return 0;
+  }
+
+  return (
+    <Card className="mb-5">
+      <CardBody>
+        <CardTitle className="">List of winners ordered by most recent.</CardTitle>
+        <div className="w-100 d-flex justify-content-between">
+          <h5>Winner</h5>
+          <h5>Prize</h5>
+        </div>
+      </CardBody>
+      <CardFooter>
+        <div className="w-100">
+        {prizesWon !== undefined && prizesWon.length === 0 ?
+          <p className="text-center">There is no winner yet.</p>
+        : '' }
+        {prizesWon !== undefined ?
+          showWinners.map((winner) => (
+              <div key={`prize-won-${winner.draw}`} className="py-2 mb-3 border-bottom d-flex justify-content-between">
+                <span><GiTrophy size="28" color="#064e3b" /> #{winner.draw}</span>
+                <p>
+                <strong>Ticket #{winner.ticket}</strong> won a prize.
+                </p>
+                <p>{withDecimals(winner.prize)} {raffleConfig.config.tokenSymbol}</p>
+              </div>
+            )
+          )
+        :
+          <div className="w-100 text-center">
+            <PulseLoader loading={true} />
+          </div>
+        }
+          <Row className="justify-content-center">
+            <ReactPaginate
+              breakLabel="..."
+              breakClassName='page-item'
+              breakLinkClassName='page-link'
+              containerClassName='pagination'
+              pageClassName='page-item'
+              pageLinkClassName='page-link'
+              previousClassName='page-item'
+              previousLinkClassName='page-link'
+              nextClassName='page-item'
+              nextLinkClassName='page-link'
+              activeClassName='active'
+              nextLabel=">"
+              onPageChange={handlePageClick}
+              pageRangeDisplayed={5}
+              pageCount={pageCount}
+              previousLabel="<"
+              renderOnZeroPageCount={null}
+            />
+          </Row>
+        </div>
+      </CardFooter>
+    </Card>
+  );
+}
+
+
 const FaucetContent = () => {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(false);
@@ -341,7 +455,7 @@ const DashContent = () => {
   const { raffleConfig } = useRaffleConfig()
   const { account, library } = useKardiachain();
   const { readKRC20 } = useKRC20();
-  const { readRaffler } = useRaffler();
+  const { readRaffler, logsRaffler } = useRaffler();
   const { readRafflable } = useRafflable();
 
   const { setBuyDialogOpen } = useDialog();
@@ -638,6 +752,7 @@ export default function Dashboard() {
   const { isClaimDialogOpen, setClaimDialogOpen } = useDialog();
   const { isWithdrawDialogOpen, setWithdrawDialogOpen } = useDialog();
   const { isFaucetDialogOpen, setFaucetDialogOpen } = useDialog();
+  const { isHistoryDialogOpen, setHistoryDialogOpen } = useDialog();
 
   return (
     <Layout>
@@ -652,6 +767,9 @@ export default function Dashboard() {
       </PageDialog>
       <PageDialog isOpen={isFaucetDialogOpen} setOpen={setFaucetDialogOpen}>
         <FaucetContent />
+      </PageDialog>
+      <PageDialog isOpen={isHistoryDialogOpen} setOpen={setHistoryDialogOpen}>
+        <HistoryContent />
       </PageDialog>
       <DashHead />
       <DashContent />

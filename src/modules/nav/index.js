@@ -15,6 +15,7 @@ import { GoGear } from 'react-icons/go';
 import { FaShoppingCart, FaTicketAlt, FaGift } from 'react-icons/fa';
 import { MdAttachMoney, MdLayers, MdChevronRight } from 'react-icons/md';
 import { RiRefund2Line } from 'react-icons/ri';
+import { GiTrophy } from 'react-icons/gi';
 import ScrollArea from '../scrollbar';
 
 const NavHead = (props) => {
@@ -35,7 +36,7 @@ export default function Nav(props) {
   const [rafflerContractUrl, setRafflerContractUrl] = React.useState('#');
   const [rafflableContractUrl, setRafflableContractUrl] = React.useState('#');
   const [collapseBasePath, setCollapseBasePath] = React.useState(''); // set Collapse path.
-  const { setBuyDialogOpen, setClaimDialogOpen, setWithdrawDialogOpen, setFaucetDialogOpen } = useDialog();
+  const { setHistoryDialogOpen, setBuyDialogOpen, setClaimDialogOpen, setWithdrawDialogOpen, setFaucetDialogOpen } = useDialog();
   const { raffleConfig } = useRaffleConfig();
   const { account } = useKardiachain();
 
@@ -84,6 +85,14 @@ export default function Nav(props) {
             <a onClick={() => { setClaimDialogOpen(true) }}>
               <FaGift size="18" color="#047857" />
               <span className="name">Claim prize</span>
+            </a>
+          </li>
+
+
+          <li>
+            <a onClick={() => { setHistoryDialogOpen(true) }}>
+              <GiTrophy size="18" color="#064e3b" />
+              <span className="name">View Winners</span>
             </a>
           </li>
 
