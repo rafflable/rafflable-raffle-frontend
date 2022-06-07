@@ -14,8 +14,8 @@ const readRafflable = (address, method, params = []) => {
   return callHelpers(client.contract, address, method, params);
 };
 
-const mint = async (address, account, amount) => {
-  const txData = client.contract.invokeContract('mint', [amount]).txData()
+const mint = async (address, account) => {
+  const txData = client.contract.invokeContract('mint', []).txData()
 
   const response = await sendTransaction(client, account, txData, address)
 

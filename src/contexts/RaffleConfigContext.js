@@ -40,6 +40,7 @@ const RaffleConfigContextProvider = ({ children }) => {
     values.ticketCost = await readRafflable(rafflable, 'cost');
     values.ticketCap = await readRafflable(rafflable, 'cap');
     values.ticketSupply = await readRafflable(rafflable, 'totalSupply');
+    values.drawCounter = await readRaffler(raffler, 'counter');
     return values;
   };
 

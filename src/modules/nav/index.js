@@ -77,7 +77,7 @@ export default function Nav(props) {
           <li>
             <a onClick={() => { setBuyDialogOpen(true) }}>
               <FaTicketAlt size="18" color="#10b981" />
-              <span className="name">Buy tickets</span>
+              <span className="name">Buy ticket</span>
             </a>
           </li>
 

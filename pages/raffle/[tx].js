@@ -348,7 +348,6 @@ const ClaimContent = () => {
 
 const BuyContent = () => {
   const [loading, setLoading] = React.useState(false);
-  const [amount, setAmount] = React.useState(1);
   const [approved, setApproved] = React.useState(false);
   const [hasFund, setHasFund] = React.useState(false);
   const [error, setError] = React.useState(false);
@@ -365,10 +364,10 @@ const BuyContent = () => {
       readKRC20(raffleConfig.config.tokenAddress, 'allowance', [account, raffleConfig.rafflableAddress]).then((val) => {
         const allowance = new BigNumber(val);
         const ticketCost = new BigNumber(raffleConfig.initialValues.ticketCost);
-        setApproved(allowance.isGreaterThanOrEqualTo(ticketCost.multipliedBy(amount)));
+        setApproved(allowance.isGreaterThanOrEqualTo(ticketCost));
       })
     }
-  }, [amount, account])
+  }, [account])
 
   React.useEffect(() => {
     const interval = setInterval(() => {
@@ -376,50 +375,43 @@ const BuyContent = () => {
         readKRC20(raffleConfig.config.tokenAddress, 'balanceOf', [account]).then((val) => {
         const bal = new BigNumber(val);
         const ticketCost = new BigNumber(raffleConfig.initialValues.ticketCost);
-        setHasFund(bal.isGreaterThanOrEqualTo(ticketCost.multipliedBy(amount)));
+        setHasFund(bal.isGreaterThanOrEqualTo(ticketCost));
         })
       }
     }, 1000);
     return () => clearInterval(interval);
   }, [account]);
 
-  const withDecimalsAndAmount = (val) => {
+  const withDecimals = (val) => {
     if (val) {
-      return new BigNumber(val).multipliedBy(amount).shiftedBy(-Math.abs(raffleConfig.config.tokenDecimals)).toString();
+      return new BigNumber(val).shiftedBy(-Math.abs(raffleConfig.config.tokenDecimals)).toString();
     }
+    return 0;
   }
+
+  const MAX_UINT256 = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
 
   return (
     <Card className="mb-5">
       <CardBody>
-        <CardTitle>Select the quantity to buy</CardTitle>
-        <RangeSlider
-          min={1}
-          max={5}
-          value={amount}
-          onChange={ changeEvent => setAmount(changeEvent.target.value)}
-          className="w-100"
-          tooltip="off"
-        />
-      <div className="w-100 text-right">
-        {amount} ticket{amount > 1 ? 's' : ''}
-      </div>
+        <CardTitle>Buy a ticket</CardTitle>
+        <img style={{ objectFit: 'scale-down' }} src={raffleConfig.config.banner} />
       </CardBody>
       <CardFooter>
         You will pay&nbsp;
-        {withDecimalsAndAmount(raffleConfig.initialValues.ticketCost)}&nbsp;
-        {raffleConfig.config.tokenSymbol}
+        <strong>{withDecimals(raffleConfig.initialValues.ticketCost)}&nbsp;
+        {raffleConfig.config.tokenSymbol}</strong>
       </CardFooter>
       {approved ?
         <Button color="primary" className="mx-2 mt-4" style={{ height: '4em' }} disabled={!hasFund}
-          onClick={() => { setError(false); setLoading(true); mint(raffleConfig.rafflableAddress, account, amount).then((tx) => { setLoading(false); setBuyDialogOpen(false); }).catch((err) => { console.log(err); setLoading(false); setError(true); }) } }
+          onClick={() => { setError(false); setLoading(true); mint(raffleConfig.rafflableAddress, account).then((tx) => { setLoading(false); setBuyDialogOpen(false); }).catch((err) => { console.log(err); setLoading(false); setError(true); }) } }
         >
           <PropagateLoader loading={loading} color="#fff" size={10} />
           {loading ? '' : 'Buy'}
         </Button>
       :
         <Button color="primary" className="mx-2 mt-4" style={{ height: '4em' }} disabled={!hasFund}
-          onClick={() => { setError(false); setLoading(true); approve(raffleConfig.config.tokenAddress, raffleConfig.rafflableAddress, account, new BigNumber(raffleConfig.initialValues.ticketCost).multipliedBy(amount).toString()).then((tx) => { setApproved(true); setLoading(false); }).catch((err) => { setLoading(false); setError(true); console.log(err)}) } }
+          onClick={() => { setError(false); setLoading(true); approve(raffleConfig.config.tokenAddress, raffleConfig.rafflableAddress, account, MAX_UINT256).then((tx) => { setApproved(true); setLoading(false); }).catch((err) => { setLoading(false); setError(true); console.log(err)}) } }
         >
           <PropagateLoader loading={loading} color="#fff" size={10} />
           {loading ? '' : 'Approve'}
@@ -440,6 +432,7 @@ const BuyContent = () => {
 }
 
 const DashContent = () => {
+  const [drawCounter, setDrawCounter] = React.useState(0);
   const [ownerBalanceOf, setOwnerBalanceOf] = React.useState(0);
   const [ownerTickets, setOwnerTickets] = React.useState([]);
   const [prizeBalance, setPrizeBalance] = React.useState(0);
@@ -486,6 +479,7 @@ const DashContent = () => {
       setHat(raffleConfig.initialValues.hat.sort((a,b) => { return a - b; }));
       setHatTicketOffset(0);
       setTicketSupply(raffleConfig.initialValues.ticketSupply);
+      setDrawCounter(raffleConfig.initialValues.drawCounter);
 
       const config = raffleConfig.config;
       config.createdAt = new Date(raffleConfig.createdAt).toString();
@@ -499,6 +493,9 @@ const DashContent = () => {
   React.useEffect(() => {
     const interval = setInterval(() => {
       if (config.tokenAddress) {
+        readRaffler(raffleConfig.rafflerAddress, 'counter').then((val) => {
+          setDrawCounter(val);
+        });
         readRaffler(raffleConfig.rafflerAddress, 'prizeOf', [config.tokenAddress]).then((val) => {
           setPrizeBalance(val);
           const percent = new BigNumber(val).dividedBy(prizeTarget).multipliedBy(100);
@@ -588,7 +585,7 @@ const DashContent = () => {
                     Your tickets&nbsp;({ownerBalanceOf})
                   </CardTitle>
                   <Button color="primary" onClick={() => { setBuyDialogOpen(true); } }>
-                    Buy tickets
+                    Buy ticket
                   </Button>
                 </div>
                 <div className="d-flex flex-column justify-content-center align-items-center col-12">
@@ -627,7 +624,7 @@ const DashContent = () => {
 
         <div className="dashboard-right col-md-12 col-lg-5 d-flex-col align-items-stretch">
           <CardBody>
-            <CardTitle className="h6 text-uppercase">Draw</CardTitle>
+            <CardTitle className="h6 text-uppercase">Draw #{drawCounter}</CardTitle>
             <div className="small mb-4 card-subtitle">
               This draw will occur when the prize balance has reached the prize target.
             </div>
